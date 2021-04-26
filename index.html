@@ -14,25 +14,49 @@
   <script type="module">
     import { LitElement, html, css } from 'https://unpkg.com/lit-element?module';
     import './brewery-detail.js';
+    import 'https://unpkg.com/@material/mwc-button?module';
 
-    const API_URL = 'https://api.openbrewerydb.org/breweries';
+    const GET_LIST_URL = 'https://api.openbrewerydb.org/breweries';
+
+    function breweryDetailTemplate(brewery, toggleVisitedStatus) {
+      return html`
+        <h3>${brewery.name} (${brewery.visited ? 'visited' : 'not-visited'})</h3>
+        <p>brewery type: ${brewery.type}</p>
+        <p>city: ${brewery.city}</p>
+        <mwc-button raised label="raised" @click=${toggleVisitedStatus}>
+          Mark as ${brewery.visited ? 'not-visited' : 'visited'}
+        </mwc-button>
+      `;
+    }
 
     class BreweryApp extends LitElement {
       static get styles() {
         return css`
           ul {
-            margin: 0;
-            padding: 0
+            display: flex;
+            flex-direction: column;
+            width: 320px;
+            margin: 0 auto;
+          }
+          li {
+            background: #4c0086;
+            padding: 20px;
+            list-style-type: none;
+            list-style-position: inside;
+            margin: 20px 0;
+            color: #fff;
+          }
+          h1 {
+            color: #4c0086;
           }
         `;
       }
 
       static get properties() {
         return {
+          loading: { type: Boolean },
           breweries: { type: Array },
-          isFetchingBreweries: { type: Boolean },
-          showOnlyVisited: { type: Boolean },
-          filter: { type: String }
+          filter: { type: String },
         }
       }
       
@@ -42,32 +66,22 @@
           this.fetchBreweries();
         }
         this.showOnlyVisited = false;
-        // this.filter = 'all';
       }
 
       async fetchBreweries() {
-        this.isFetchingBreweries = true;
-        const response = await fetch(API_URL);
-        const jsonResp = await response.json();
-        this.breweries = jsonResp;
-        this.breweries = this.breweries && this.breweries.map(brewery => ({
-          ...brewery,
-          status: false
-        }));
-        this.isFetchingBreweries = false;
+        this.loading = true;
+        const response = await fetch(GET_LIST_URL);
+        const jsonResponse = await response.json();
+        this.breweries = jsonResponse;
+        this.loading = false;
       }
 
-      _handleVisitStatus(e) {
-        const { value, id } = e.detail;
+      toggleVisitedStatus(breweryToUpdate) {
         this.breweries = this.breweries.map(brewery => {
-          if (brewery.id == id) {
-            return {
-              ...brewery,
-              status: value
-            }
-          }
-          return brewery;
-        })
+          return brewery === breweryToUpdate
+            ? { ...brewery, visited: !brewery.visited }
+            : brewery;
+        });
       }
 
       _filterNone() {
@@ -83,32 +97,27 @@
       }
 
       render() {
-        const totalVisited = this.breweries ? this.breweries.filter(b => b.status == "true").length : 0;
-        const breweries = this.breweries && this.breweries.filter(brewery => {
-            if (!this.filter) {
-              return true;
-            }
-            return this.filter === 'visited' ? brewery.status : !brewery.status;
-          });
+        const totalVisited = this.breweries.filter(b => b.visited).length;
+        const totalNotVisted = this.breweries.length - totalVisited;
+        const breweries = this.breweries.filter(brewery => {
+          if (!this.filter) {
+            return true;
+          }
+          return this.filter === 'visited' ? brewery.visited : !brewery.visited;
+        });
         if (this.isFetchingBreweries) {
           return 'Loading..';
         }
         return html`
           <h1>Total Visited: ${totalVisited}</h1>
-          <button @click=${this._filterNone}>Filter none</button>
-          <button @click=${this._filterVisited}>Filter visited</button>
-          <button @click=${this._filterNotVisited}>Filter not-visited</button>
+          <mwc-button raised label="raised" @click=${this._filterNone}>Filter none</mwc-button>
+          <mwc-button raised label="raised" @click=${this._filterVisited}>Filter visited</mwc-button>
+          <mwc-button raised label="raised" @click=${this._filterNotVisited}>Filter not-visited</mwc-button>
           <ul>
             ${breweries.map(
-              brewery => {
-                return html`
-                <brewery-detail
-                  .brewery="${brewery}"
-                  @handle-visit-status="${this._handleVisitStatus}"
-                  .showOnlyVisited="${this.showOnlyVisited}"
-                ></brewery-detail>
-                `
-              }
+              brewery => html`
+                <li>${breweryDetailTemplate(brewery, () => this.toggleVisitedStatus(brewery))}</li>
+              `,
             )}
           </ul>
         `;
