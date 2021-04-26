@@ -23,7 +23,7 @@
         <h3>${brewery.name} (${brewery.visited ? 'visited' : 'not-visited'})</h3>
         <p>brewery type: ${brewery.type}</p>
         <p>city: ${brewery.city}</p>
-        <mwc-button raised label="raised" @click=${toggleVisitedStatus}>
+        <mwc-button raised @click=${toggleVisitedStatus}>
           Mark as ${brewery.visited ? 'not-visited' : 'visited'}
         </mwc-button>
       `;
@@ -34,20 +34,30 @@
         return css`
           ul {
             display: flex;
-            flex-direction: column;
-            width: 320px;
-            margin: 0 auto;
+            width: 800px;
+            margin: 0px auto;
+            justify-content: center;
+            flex-wrap: wrap;
           }
           li {
-            background: #4c0086;
-            padding: 20px;
+            background: rgb(76, 0, 134);
             list-style-type: none;
             list-style-position: inside;
-            margin: 20px 0;
-            color: #fff;
+            color: rgb(255, 255, 255);
+            flex: 1 1 45%;
+            box-shadow: black 0px 0px 0px 1px;
+            padding: 15px 5px;
+            margin: 10px;
           }
           h1 {
             color: #4c0086;
+          }
+          h3 {
+            margin-top: 0;
+          }
+          mwc-button {
+            --mdc-theme-primary: #e9437a;
+            --mdc-theme-on-primary: white;
           }
         `;
       }
@@ -110,9 +120,9 @@
         }
         return html`
           <h1>Total Visited: ${totalVisited}</h1>
-          <mwc-button raised label="raised" @click=${this._filterNone}>Filter none</mwc-button>
-          <mwc-button raised label="raised" @click=${this._filterVisited}>Filter visited</mwc-button>
-          <mwc-button raised label="raised" @click=${this._filterNotVisited}>Filter not-visited</mwc-button>
+          <mwc-button raised @click=${this._filterNone}>Filter none</mwc-button>
+          <mwc-button raised @click=${this._filterVisited}>Filter visited</mwc-button>
+          <mwc-button raised @click=${this._filterNotVisited}>Filter not-visited</mwc-button>
           <ul>
             ${breweries.map(
               brewery => html`
