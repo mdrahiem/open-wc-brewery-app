@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Brewery App using Open Web Components</title>
+  <link rel="stylesheet" type="text/css" href="./index.css" />
+</head>
+
+<body>
+  <brewery-app></brewery-app>
+  <script type="module">
+    import { LitElement, html, css } from 'https://unpkg.com/lit-element?module';
+    import './brewery-detail.js';
+
+    const API_URL = 'https://api.openbrewerydb.org/breweries';
+
+    class BreweryApp extends LitElement {
+      static get styles() {
+        return css`
+          ul {
+            margin: 0;
+            padding: 0
+          }
+        `;
+      }
+
+      static get properties() {
+        return {
+          breweries: { type: Array },
+          isFetchingBreweries: { type: Boolean },
+          showOnlyVisited: { type: Boolean },
+          filter: { type: String }
+        }
+      }
+      
+      connectedCallback() {
+        super.connectedCallback();
+        if(!this.breweries) {
+          this.fetchBreweries();
+        }
+        this.showOnlyVisited = false;
+        // this.filter = 'all';
+      }
+
+      async fetchBreweries() {
+        this.isFetchingBreweries = true;
+        const response = await fetch(API_URL);
+        const jsonResp = await response.json();
+        this.breweries = jsonResp;
+        this.breweries = this.breweries && this.breweries.map(brewery => ({
+          ...brewery,
+          status: false
+        }));
+        this.isFetchingBreweries = false;
+      }
+
+      _handleVisitStatus(e) {
+        const { value, id } = e.detail;
+        this.breweries = this.breweries.map(brewery => {
+          if (brewery.id == id) {
+            return {
+              ...brewery,
+              status: value
+            }
+          }
+          return brewery;
+        })
+      }
+
+      _filterNone() {
+        this.filter = null;
+      }
+
+      _filterVisited() {
+        this.filter = 'visited';
+      }
+
+      _filterNotVisited() {
+        this.filter = 'not-visited';
+      }
+
+      render() {
+        const totalVisited = this.breweries ? this.breweries.filter(b => b.status == "true").length : 0;
+        const breweries = this.breweries && this.breweries.filter(brewery => {
+            if (!this.filter) {
+              return true;
+            }
+            return this.filter === 'visited' ? brewery.status : !brewery.status;
+          });
+        if (this.isFetchingBreweries) {
+          return 'Loading..';
+        }
+        return html`
+          <h1>Total Visited: ${totalVisited}</h1>
+          <button @click=${this._filterNone}>Filter none</button>
+          <button @click=${this._filterVisited}>Filter visited</button>
+          <button @click=${this._filterNotVisited}>Filter not-visited</button>
+          <ul>
+            ${breweries.map(
+              brewery => {
+                return html`
+                <brewery-detail
+                  .brewery="${brewery}"
+                  @handle-visit-status="${this._handleVisitStatus}"
+                  .showOnlyVisited="${this.showOnlyVisited}"
+                ></brewery-detail>
+                `
+              }
+            )}
+          </ul>
+        `;
+      }
+    }
+
+    customElements.define('brewery-app', BreweryApp);
+  </script>
+</body>
+</html>
