@@ -93,9 +93,9 @@ class BreweryApp extends LitElement {
     }
 
     render() {
-    const totalVisited = this.breweries.filter(b => b.visited).length;
-    const totalNotVisted = this.breweries.length - totalVisited;
-    const breweries = this.breweries.filter(brewery => {
+    const totalVisited = this.breweries && this.breweries.filter(b => b.visited).length;
+    const totalNotVisted = this.breweries && this.breweries.length - totalVisited;
+    const breweries = this.breweries && this.breweries.filter(brewery => {
         if (!this.filter) {
         return true;
         }
@@ -110,7 +110,7 @@ class BreweryApp extends LitElement {
         <mwc-button raised @click=${this._filterVisited}>Filter visited</mwc-button>
         <mwc-button raised @click=${this._filterNotVisited}>Filter not-visited</mwc-button>
         <ul>
-        ${breweries.map(
+        ${breweries && breweries.map(
             brewery => html`
                 <li>${breweryDetailTemplate(brewery, () => this.toggleVisitedStatus(brewery))}</li>
             `,
